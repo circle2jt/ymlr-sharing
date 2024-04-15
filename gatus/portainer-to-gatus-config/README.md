@@ -28,6 +28,19 @@ services:
 ```
 
 ## 3. Run in a docker
+#### Run with an access token
+```sh
+  docker run --rm -it --name gatus-portainer \
+    -v /gatus/config:/gatus/config:rw,rshared \
+    -e url=${PORTAINER_URL} \
+    -e token=${PORTAINER_TOKEN} \
+    circle2jt/ymlr \
+    https://raw.githubusercontent.com/circle2jt/ymlr-sharing/main/gatus/portainer-to-gatus-config/index.yaml
+```
+- `PORTAINER_URL`:      portainer url
+- `PORTAINER_TOKEN`:    user access token in portainer
+
+#### Run with username/password
 ```sh
   docker run --rm -it --name gatus-portainer \
     -v /gatus/config:/gatus/config:rw,rshared \
@@ -37,10 +50,10 @@ services:
     circle2jt/ymlr \
     https://raw.githubusercontent.com/circle2jt/ymlr-sharing/main/gatus/portainer-to-gatus-config/index.yaml
 
-  # PORTAINER_URL:      the portainer url
-  # PORTAINER_USER: username in the portainer
-  # PORTAINER_PASS: password for username in the 
 ```
+- `PORTAINER_URL`:      portainer url
+- `PORTAINER_USER`:     username in portainer
+- `PORTAINER_PASS`:     password in portainer
 
 # Addition
 Allow add multiple gatus config in a service in stacks

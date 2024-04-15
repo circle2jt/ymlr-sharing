@@ -2,6 +2,7 @@ name: portainer-to-gatus-config
 vars:
   saveTo: /gatus/config
   url: http://portainer.lan:9000
+  token: ""
   username: admin
   password: ""
 runs:
@@ -10,21 +11,33 @@ runs:
       baseURL:  ${ $vars.url }
       responseType: json
 
+  - if: ${ $vars.token }
+    runs:
+      - <-: (request)
+        ->: (authRequest)
+        template:
+          headers:
+            X-API-Key: ${ $vars.token }
   - name: login
-    <-: (request)
-    fetch'post:
-      url: /api/auth
-      body:
-        username: ${ $vars.username }
-        password: ${ $vars.password }
-    vars:
-      token: ${ this.$.response.data.jwt }
-
-  - <-: (request)
-    ->: (authRequest)
-    template:
-      headers:
-        Authorization: Bearer ${ $vars.token }
+    elseif: ${ $vars.username && $vars.password }
+    runs:
+      - <-: (request)
+        fetch'post:
+          url: /api/auth
+          body:
+            username: ${ $vars.username }
+            password: ${ $vars.password }
+        vars:
+          token: ${ this.$.response.data.jwt }
+      - <-: (request)
+        ->: (authRequest)
+        template:
+          headers:
+            Authorization: Bearer ${ $vars.token }
+  
+  - name: Could not authorized
+    if: ${ !$vars.token }
+    exit: 1
 
   - <-: (authRequest)
     fetch'get:

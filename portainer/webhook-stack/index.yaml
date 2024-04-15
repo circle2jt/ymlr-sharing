@@ -1,0 +1,86 @@
+name: portainer webhook-stack
+vars:
+  url: http://portainer.lan:9000
+  username: admin
+  password: ""
+  name: ""
+  pullImage: true
+  prune: false
+runs:
+  - ->: (request)
+    template:
+      baseURL:  ${ $vars.url }
+      responseType: json
+
+  - name: login
+    <-: (request)
+    fetch'post:
+      url: /api/auth
+      body:
+        username: ${ $vars.username }
+        password: ${ $vars.password }
+    vars:
+      token: ${ this.$.response.data.jwt }
+
+  - <-: (request)
+    ->: (authRequest)
+    template:
+      headers:
+        Authorization: Bearer ${ $vars.token }
+
+  - name: Reup stack ${ $vars.name }
+    if: ${ $vars.name }
+    runs:
+      - js: |
+          const names = $vars.name.split('/')
+          $vars.serverName = names[0]
+          $vars.stackName = names[1]
+      - <-: (authRequest)
+        fetch'get:
+          url: /api/endpoints
+          query:
+            start: 1
+            limit: 10
+            order: asc
+            search: ${ $vars.serverName }
+            provisioned: true
+            tagsPartialMatch: true
+            updateInformation: false
+        vars: servers
+      - js: |
+          $vars.serverID = $vars.servers?.[0]?.Id
+      - <-: (authRequest)
+        fetch'get:
+          url: /api/stacks
+          query:
+            filters: '{"EndpointID":${ $vars.serverID },"IncludeOrphanedStacks":true}'
+        vars: stacks
+      - js: |
+          $vars.stack = $vars.stacks.find(stack => stack.Name === $vars.stackName)
+      - if: ${ $vars.stack }
+        runs:
+          - <-: (authRequest)
+            fetch'get:
+              url: /api/stacks/${ $vars.stack.Id }/file
+            vars: stackFileContent
+
+          - <-: (authRequest)
+            fetch'put:
+              url: /api/stacks/${ $vars.stack.Id }
+              query:
+                endpointId: ${ $vars.serverID }
+              type: json
+              body:
+                id: 3
+                StackFileContent: ${ $vars.stackFileContent.StackFileContent }
+                Env: ${ $vars.stack.Env || [] }
+                Prune: ${ $vars.prune }
+                PullImage: ${ $vars.pullImage }
+            vars:
+              message: ${ this.$.response.data.message }
+
+          - name: ${ $vars.message }
+            if: ${ $vars.message }
+
+          - name: Done
+            else:

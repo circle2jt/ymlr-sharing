@@ -1,0 +1,109 @@
+name: portainer-to-gatus-config
+vars:
+  saveTo: /gatus/config
+  url: http://portainer.lan:9000
+  username: admin
+  password: ""
+runs:
+  - ->: (request)
+    template:
+      baseURL:  ${ $vars.url }
+      responseType: json
+
+  - name: login
+    <-: (request)
+    fetch'post:
+      url: /api/auth
+      body:
+        username: ${ $vars.username }
+        password: ${ $vars.password }
+    vars:
+      token: ${ this.$.response.data.jwt }
+
+  - <-: (request)
+    ->: (authRequest)
+    template:
+      headers:
+        Authorization: Bearer ${ $vars.token }
+
+  - <-: (authRequest)
+    fetch'get:
+      url: /api/endpoints?start=1&limit=1000&order=asc&search=&provisioned=true&tagsPartialMatch=true&updateInformation=false
+    vars: servers
+
+  - loop: ${ $vars.servers }
+    runs:
+      - vars:
+          serverName: ${ this.parentProxy.loopValue.Name }
+          serverID: ${this.parentProxy.loopValue.Id }
+          GatusEndpoints: []
+      - name: Get all stacks in the server "${ $vars.serverName }"
+        <-: (authRequest)
+        fetch'get:
+          url: /api/stacks
+          query:
+            filters: '{"EndpointID":${ $vars.serverID },"IncludeOrphanedStacks":true}'
+        vars: stacks
+
+      - loop: ${ $vars.stacks }
+        runs:
+          - vars:
+              stackName: ${ this.parentProxy.loopValue.Name }
+          - name: Get stack file content of ${ this.parentProxy.loopValue.Name }
+            <-: (authRequest)
+            fetch'get:
+              url: /api/stacks/${ this.parentProxy.loopValue.Id }/file
+            vars: 
+              stackFileContent: ${ this.$.response.data.StackFileContent }
+          - js: |
+              const { load } = require('js-yaml')
+              $vars.stack = load($vars.stackFileContent)
+          - loop: ${ $vars.stack.services }
+            if: ${ $loopValue.labels?.gatus }
+            js: |
+              const { load } = require('js-yaml')
+              let gatus = load($loopValue.labels.gatus)
+              if (!Array.isArray(gatus)) {
+                gatus = [gatus]
+              }
+              gatus = gatus.map(ginfo => {
+                let { name = $loopKey, group, ...g } = ginfo
+                const rs = {}
+                if ($vars.stackName !== name) {
+                    name = $vars.stackName + '/' + name
+                }
+                rs.name = name
+                group = group || $vars.serverName
+                if (group) {
+                  rs.group = group + '/portainer'
+                } 
+                return {
+                  ...rs,
+                  ...g,
+                }
+              })
+              $vars.GatusEndpoints.push(...gatus)
+
+      - js: |
+          const { dump } = require('js-yaml')
+          $vars.result = dump({
+            endpoints: $vars.GatusEndpoints
+          })
+          const newHash = $utils.md5.encrypt($vars.result)
+          $vars.result = '# signed '+ newHash + '\n' + $vars.result
+          $vars.output = `${ $vars.saveTo }/${ $vars.serverName }.portainer.yaml`
+          const fs = require('fs')
+          if (fs.existsSync($vars.output)) {
+            const oldContent = fs.readFileSync($vars.output, 'utf8')
+            const [ , oldHash] = oldContent.match(/^[\s\t]*# signed\s+([^\s]+)/) || []
+            if (oldHash == newHash) {
+              $vars.output = null
+              return
+            }
+          }
+      - name: Updated to ${ $vars.output }
+        if: ${ $vars.output }
+        file'write:
+          path: ${ $vars.output }
+          content: ${ $vars.result }
+

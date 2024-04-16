@@ -1,0 +1,7 @@
+{
+    "name": "ymlr-sharing",
+    "version": "0.0.1",
+    "scripts": {
+        "next": "npx ymlr -e VERSIONNAME=prerelease -e CHANGEDIR=~~/changes -e CHANGEFILE=~~/CHANGES.md -e COMMITFILES=\"~~/package.json,~~/package-lock.json\" -e FORCE=true -- ./github/npm-up-version/index.yaml"
+    }
+}

@@ -3,5 +3,8 @@
     "version": "0.0.2-0",
     "scripts": {
         "next": "npx ymlr -e VERSIONNAME=prerelease -e CHANGEDIR=~~/changes -e CHANGEFILE=~~/CHANGES.md -e COMMITFILES=\"~~/package.json,~~/package-lock.json\" -e FORCE=true -- ./github/npm-up-version/index.yaml"
+    },
+    "devDependencies": {
+        "ymlr": "^1.2.6-alpha.32"
     }
 }

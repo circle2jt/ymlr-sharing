@@ -62,7 +62,7 @@ runs:
         runs:
           - vars:
               stackName: ${ this.parentProxy.loopValue.Name }
-          - name: Get stack file content of ${ this.parentProxy.loopValue.Name }
+          - name: Get stack file content of ${ $vars.stackName }
             <-: (authRequest)
             fetch'get:
               url: /api/stacks/${ this.parentProxy.loopValue.Id }/file
@@ -75,17 +75,26 @@ runs:
             if: ${ $loopValue.labels?.gatus }
             js: |
               const { load } = require('js-yaml')
-              let gatus = load($loopValue.labels.gatus)
+              const service = $loopValue
+              service.name = $loopKey
+              service.stack_name = $vars.stackName
+
+              let gatus = load(service.labels.gatus)
               if (!Array.isArray(gatus)) {
                 gatus = [gatus]
               }
               gatus = gatus.map(ginfo => {
-                let { name = $loopKey, group, ...g } = ginfo
+                let { name, group, ...g } = ginfo
+                
                 const rs = {}
+                const defaultName = service.container_name || service.name
+                if (!name) {
+                  name = defaultName
+                }
                 if ($vars.stackName !== name) {
                     name = $vars.stackName + '/' + name
                 }
-                rs.name = name
+                rs.name = name.replaceAll('$name', defaultName)
                 group = group || $vars.serverName
                 if (group) {
                   rs.group = group + '/portainer'

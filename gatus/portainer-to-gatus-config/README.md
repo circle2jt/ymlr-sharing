@@ -58,16 +58,17 @@ services:
 # Addition
 Allow add multiple gatus config in a service in stacks
 ```yaml
+# stack name in portainer is `infra`
 services:
   redis:
     image: redis:alpine
-    container_name: redis
+    container_name: redis_container_name
     restart: always
     ports:
       - 6379:6379/tcp
     labels:
       gatus: |
-        - url: "tcp://redis:6379"
+        - url: "tcp://redis:6379"       # name => "infra/redis/redis_container_name"
           interval: 30s
           conditions:
             - "[CONNECTED] == true"
@@ -75,7 +76,7 @@ services:
             - type: telegram
               description: Redis in my_server is down
               send-on-resolved: true
-        - name: check-my_server
+        - name: $name-ping              # name => "infra/redis/redis_container_name-ping"
           url: "icmp://my_server"
           conditions:
             - "[CONNECTED] == true"

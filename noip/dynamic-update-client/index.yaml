@@ -1,0 +1,31 @@
+debug: info
+vars:
+  username: ""
+  password: ""
+  ip: ""
+  hostname: ""
+  intervalTime: ""
+runs:
+  - js: |
+      $vars.count = [true]
+      if ( $vars.intervalTime ) {
+        $vars.count = true
+      }
+  - loop: ${ $vars.count }
+    runs:
+      - name: Update "${ $vars.ip }" to "${ $vars.hostname }"
+        if: ${ $vars.ip !== $vars._cachedIp }
+        http'get:
+          url: https://dynupdate.no-ip.com/nic/update
+          query:
+            hostname: ${ $vars.hostname }
+            myip: ${ $vars.ip }
+          headers:
+            Authorization: Basic ${ $utils.base64.encrypt(`${ $vars.username }:${ $vars.password }`) }
+            User-Agent: no-ip shell script/1.0 mail@mail.com
+        vars:
+          _cachedIp: ${ $vars.ip }
+
+      - if: ${ $vars.intervalTime } 
+        sleep: ${ $vars.intervalTime }
+        

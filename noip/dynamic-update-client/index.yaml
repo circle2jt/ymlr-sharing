@@ -23,7 +23,7 @@ runs:
       - if: ${ $vars.ip }
         runs:
           - name: Update "${ $vars.ip }" to "${ $vars.hostname }"
-            if: ${ $vars.ip !== $vars._cachedIp }
+            if: ${ $vars.ip !== $vars.cachedIp }
             http'get:
               url: https://dynupdate.no-ip.com/nic/update
               query:
@@ -33,7 +33,7 @@ runs:
                 Authorization: Basic ${ $utils.base64.encrypt(`${ $vars.username }:${ $vars.password }`) }
                 User-Agent: no-ip shell script/1.0 mail@mail.com
             vars:
-              _cachedIp: ${ $vars.ip }
+              cachedIp: ${ $vars.ip }
       - name: Could not found the IP
         else:
 

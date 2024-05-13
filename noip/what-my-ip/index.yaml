@@ -1,4 +1,6 @@
 runs:
+  - vars:
+      myip: 
   - fetch'get:
       url: https://api.whatismyip.com/wimi.php
       responseType: json
@@ -13,6 +15,10 @@ runs:
         Sec-Fetch-Site: same-site
     vars:
       myip: ${ this.$.response.data.ip }
+    failure:
+      restart:
+        max: 3
+        sleep: 10s
 
   - name: My is ${ $vars.myip }
     scene'returns: ${ $vars.myip }

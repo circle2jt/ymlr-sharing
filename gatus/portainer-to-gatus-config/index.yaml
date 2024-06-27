@@ -5,6 +5,7 @@ vars:
   token: ""
   username: admin
   password: ""
+  groupFilter: ""
 runs:
   - ->: (request)
     template:
@@ -43,6 +44,11 @@ runs:
     fetch'get:
       url: /api/endpoints?start=1&limit=1000&order=asc&search=&provisioned=true&tagsPartialMatch=true&updateInformation=false
     vars: servers
+
+  - js: |
+      if ($vars.groupFilter) {
+        $vars.groupFilter = new RegExp($vars.groupFilter)
+      }
 
   - loop: ${ $vars.servers }
     runs:
@@ -99,11 +105,16 @@ runs:
                 if (group) {
                   rs.group = group + '/portainer'
                 } 
+                if ($vars.groupFilter && rs.group) {
+                  if (!$vars.groupFilter.test(rs.group)) {
+                    return null
+                  }
+                }
                 return {
                   ...rs,
                   ...g,
                 }
-              })
+              }).filter(g => g)
               $vars.GatusEndpoints.push(...gatus)
 
       - js: |

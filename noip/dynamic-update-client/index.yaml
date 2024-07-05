@@ -30,7 +30,7 @@ runs:
                 hostname: ${ $vars.hostname }
                 myip: ${ $vars.ip }
               headers:
-                Authorization: Basic ${ $utils.base64.encrypt(`${ $vars.username }:${ $vars.password }`) }
+                Authorization: Basic ${ $utils.base64.encode(`${ $vars.username }:${ $vars.password }`) }
                 User-Agent: no-ip shell script/1.0 mail@mail.com
             vars:
               cachedIp: ${ $vars.ip }

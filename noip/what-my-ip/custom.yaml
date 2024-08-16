@@ -1,0 +1,15 @@
+runs:
+  - vars:
+      myip: 
+  - fetch'get:
+      url: https://thanhdt.tplinkdns.com/what-my-ip
+      responseType: text
+    vars:
+      myip: ${ this.$.response.data }
+    failure:
+      restart:
+        max: 3
+        sleep: 15s
+
+  - name: My is ${ $vars.myip }
+    scene'returns: ${ $vars.myip }

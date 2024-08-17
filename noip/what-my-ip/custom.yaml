@@ -7,9 +7,7 @@ runs:
     vars:
       myip: ${ this.$.response.data }
     failure:
-      restart:
-        max: 3
-        sleep: 15s
+      ignore: true
 
   - name: My is ${ $vars.myip }
     scene'returns: ${ $vars.myip }

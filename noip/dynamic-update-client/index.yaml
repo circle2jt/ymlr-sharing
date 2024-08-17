@@ -35,6 +35,10 @@ runs:
                 User-Agent: no-ip shell script/1.0 mail@mail.com
             vars:
               cachedIp: ${ $vars.ip }
+            failure:
+              restart:
+                max: 3
+                sleep: 15s
       - name: Could not found the IP
         else:
 

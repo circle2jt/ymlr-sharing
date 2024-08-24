@@ -18,7 +18,7 @@ runs:
         scene:
           cached: true
           # path: https://raw.githubusercontent.com/circle2jt/ymlr-sharing/main/noip/what-my-ip/index.yaml
-          path: https://raw.githubusercontent.com/circle2jt/ymlr-sharing/main/noip/what-my-ip/custom.yaml
+          path: https://raw.githubusercontent.com/circle2jt/ymlr-sharing/main/noip/what-my-ip/ipify.yaml
         vars: ip
 
       - if: ${ $vars.ip }

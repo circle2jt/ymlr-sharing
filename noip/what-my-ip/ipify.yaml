@@ -2,10 +2,12 @@ runs:
   - vars:
       myip: 
   - fetch'get:
-      url: https://thanhdt.tplinkdns.com/what-my-ip
-      responseType: text
+      url: https://api.ipify.org
+      query: 
+        format: json
+      responseType: json
     vars:
-      myip: ${ this.$.response.data }
+      myip: ${ this.$.response.data.ip }
     failure:
       ignore: true
 

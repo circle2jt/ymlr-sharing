@@ -15,10 +15,8 @@ runs:
     runs:
       - if: ${ $vars.count === true || !$vars.ip }
         debug: silent
-        scene:
-          cached: true
-          # path: https://raw.githubusercontent.com/circle2jt/ymlr-sharing/main/noip/what-my-ip/index.yaml
-          path: https://raw.githubusercontent.com/circle2jt/ymlr-sharing/main/noip/what-my-ip/ipify.yaml
+        http'get:
+          url: http://ifconfig.me
         vars: ip
 
       - if: ${ $vars.ip }
